@@ -1,0 +1,13 @@
+JiftyX-ModelHelprs
+
+This is my work to make C<Jifty::DBI> objects a little bit easier to
+start with. It let you write something this obvious:
+
+  $book = Book(42);
+  $books = BookCollection( author => "Neal Stephenson" );
+
+This module is released as an extension under JiftyX namespace as
+requested by jifty team. Use it at your own risk.
+
+Cheers,
+Kang-min Liu <gugod@gugod.org>
