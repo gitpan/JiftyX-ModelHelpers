@@ -9,7 +9,7 @@ WriteMakefile(
   NAME      => 'JiftyX::ModelHelpers',
   AUTHOR    => 'Kang\-min\ Liu\ \<gugod\@gugod\.org\>',
   ABSTRACT  => 'Make it simpler to fetch records in Jifty.',
-  VERSION   => '0.20',
+  VERSION   => '0.21',
   EXE_FILES => [ qw() ],
   (eval { ExtUtils::MakeMaker->VERSION(6.21) } ? (LICENSE => 'mit') : ()),
   PREREQ_PM    => {

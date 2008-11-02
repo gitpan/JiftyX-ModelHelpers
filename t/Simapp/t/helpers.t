@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use Jifty::Test::Dist tests => 3;
+use Jifty::Test::Dist tests => 6;
 use JiftyX::ModelHelpers;
 
 {
@@ -25,3 +25,14 @@ my $good_book_id;
     is( $b->name, "Good Book A" );
 }
 
+{
+    my $b = BookCollection;
+    is( ref($b), "Simapp::Model::BookCollection" );
+}
+
+
+{
+    my $b = BookCollection(name => "Good Book A");
+    is( ref($b), "Simapp::Model::BookCollection" );
+    is( $b->count, 1 );
+}

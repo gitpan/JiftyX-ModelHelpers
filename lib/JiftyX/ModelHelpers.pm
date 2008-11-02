@@ -1,5 +1,5 @@
 package JiftyX::ModelHelpers;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 # ABSTRACT: Make it simpler to fetch records in Jifty.
 
@@ -81,7 +81,7 @@ JiftyX::ModelHelpers - Make it simpler to fetch records in Jifty.
 
 =head1 VERSION
 
-version 0.20
+version 0.21
 
 =head1 SYNOPSIS
 
@@ -98,9 +98,9 @@ Suppose you have a "Book" model in your app:
     # Load a colllection of books
     $books = M("BookCollection", author => "Jesse");
 
-If you want more sugar:
+Or, even better:
 
-    use JiftyX::ModelHelper ':auto';
+    use JiftyX::ModelHelper;
 
     # Load the record of book with id = $id
     $book  = Book($id);
@@ -188,9 +188,9 @@ They are imported to your currenct package scope as:
     Book
     BookCollection
 
-But only when use use C<JiftyX::ModelHelpers> with an C<:auto> tag:
+The are generated and imported when you say:
 
-    use JiftyX::ModelHelpers ':auto':
+    use JiftyX::ModelHelpers;
 
 The record function takes either exact one argument or a hash. When it
 is given only one argument, that argument is treated as the value of
@@ -260,6 +260,11 @@ and you can pass those functions your want explicitly:
 
     # Don't want BookCollection function
     use JiftyX::ModelHelpers qw(Book);
+
+Or you can only import the M() function, which is likely
+much less problematic:
+
+    use JiftyX::ModelHelpers qw(M);
 
 =head2 Development
 

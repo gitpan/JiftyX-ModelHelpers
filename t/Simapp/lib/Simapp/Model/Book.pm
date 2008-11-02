@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 package Simapp::Model::Book;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use Jifty::DBI::Schema;
 
