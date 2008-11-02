@@ -1,11 +1,19 @@
-use inc::Module::Install;
 
-name            'JiftyX-ModelHelpers';
-license         'mit';
-author          'Kang-min Liu <gugod@gugod.org>';
-all_from        'lib/JiftyX/ModelHelpers.pm';
+use strict;
+use warnings;
 
-build_requires  'Test::More';
-build_requires  'Test::Warn';
+use ExtUtils::MakeMaker;
 
-WriteAll;
+WriteMakefile(
+  DISTNAME  => 'JiftyX-ModelHelpers',
+  NAME      => 'JiftyX::ModelHelpers',
+  AUTHOR    => 'Kang\-min\ Liu\ \<gugod\@gugod\.org\>',
+  ABSTRACT  => 'Make it simpler to fetch records in Jifty.',
+  VERSION   => '0.20',
+  EXE_FILES => [ qw() ],
+  (eval { ExtUtils::MakeMaker->VERSION(6.21) } ? (LICENSE => 'mit') : ()),
+  PREREQ_PM    => {
+    "Jifty" => '0.80408',
+    "Exporter" => '0',
+  },
+);

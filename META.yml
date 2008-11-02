@@ -1,19 +1,11 @@
----
-abstract: 'Use Jifty model easily.'
-author:
-  - 'Kang-min Liu <gugod@gugod.org>'
-build_requires:
-  Test::More: 0
-  Test::Warn: 0
-distribution_type: module
-generated_by: 'Module::Install version 0.75'
+--- 
+abstract: Make it simpler to fetch records in Jifty.
+author: 
+  - Kang-min Liu <gugod@gugod.org>
+generated_by: Dist::Zilla::Plugin::MetaYaml version 1.003
 license: mit
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.3.html
-  version: 1.3
 name: JiftyX-ModelHelpers
-no_index:
-  directory:
-    - inc
-    - t
-version: 0.01
+requires: 
+  Exporter: 0
+  Jifty: 0.80408
+version: 0.20

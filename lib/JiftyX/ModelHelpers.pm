@@ -1,12 +1,45 @@
 package JiftyX::ModelHelpers;
+our $VERSION = '0.20';
+
+# ABSTRACT: Make it simpler to fetch records in Jifty.
+
 use strict;
 use Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT;
-our $VERSION = "0.01";
+our @EXPORT = qw(M);
 
-if (@EXPORT == 0) {
+sub M {
+    my ($model, @params) = @_;;
+    my $record = Jifty->app_class(Model => $model)->new;
+    if (@params) {
+        if (index($model, "Collection") > 0) {
+            my %params = (@params);
+            while (my ($k, $v) = each %params) {
+                $record->limit(column => $k, value => $v);
+            }
+        }
+        else {
+            $record->load_by_cols(@params);
+        }
+    }
+    return $record;
+}
+
+sub import {
+    my ($self, @tags) = @_;
+    build_model_helpers();
+
+    # Let the Exporter.pm do the heavy-liftingjobs
+    local $Exporter::ExportLevel = $Exporter::ExportLevel + 1;
+    Exporter::import($self, @tags);
+}
+
+
+my $built = 0;
+sub build_model_helpers {
+    return if $built;
+
     require Jifty::Schema;
     my @models = map { s/.*::(.+)$/$1/;  $_; } Jifty::Schema->new->models;
 
@@ -15,23 +48,13 @@ if (@EXPORT == 0) {
         if ( index($model, "Collection") >= 0) {
             *{"$model"} = sub {
                 my @args = @_;
-                my $obj = Jifty->app_class(Model => "$model")->new;
-                if (@args == 0) {
-                    $obj->unlimit;
-                }
-                elsif (@args % 2 == 0) {
-                    my %limits = @args;
-                    while( my ($col, $val) = each %limits) {
-                        $obj->limit(column => $col, value => $val);
-                    }
-                }
-                return $obj;
+                return M($model, @args);
             }
         }
         else {
             *{"$model"} = sub {
                 my @args = @_;
-                my $obj = Jifty->app_class(Model => "$model")->new;
+                my $obj = M($model);
                 if (@args == 1) {
                     $obj->load($args[0]);
                 }
@@ -43,17 +66,22 @@ if (@EXPORT == 0) {
         }
         push @EXPORT, "&${model}";
     }
+
+    $built = 1;
 }
 
-"true, true.";
+1;
 
+
+
+__END__
 =head1 NAME
 
-JiftyX::ModelHelpers - Use Jifty model easily.
+JiftyX::ModelHelpers - Make it simpler to fetch records in Jifty.
 
 =head1 VERSION
 
-Version 0.01
+version 0.20
 
 =head1 SYNOPSIS
 
@@ -62,36 +90,111 @@ Suppose you have a "Book" model in your app:
     use JiftyX::ModelHelper;
 
     # Load the record of book with id = $id
-    $book = Book($id);
+    $book = M(Book => id => $id);
 
     # Load by other criteria
-    $book = Book(isbn => " 978-0099410676");
+    $book = M(Book => isbn => " 978-0099410676");
 
     # Load a colllection of books
+    $books = M("BookCollection", author => "Jesse");
+
+If you want more sugar:
+
+    use JiftyX::ModelHelper ':auto';
+
+    # Load the record of book with id = $id
+    $book  = Book($id);
+    $book  = Book(isbn => " 978-0099410676");
     $books = BookCollection(author => "Jesse");
 
-=head1 Description
+=head1 DESCRIPTION
 
 Jifty programmers may find them self very tired of typing in their
 View or Dispatcher when it comes to retrieve records or collection of
 records. That is why this module was borned.
 
-This module, when required, generates two functions for each models
-your Jifty application. One for accessing records, the other for
-accessing collections. For example, if you have a model named "Book",
-the generated functions are:
+When used, this module export a function named C<M> by default.
+This function takes one model name and returns its record object:
+
+    $book = M("Book");
+
+Effectively, this is the same as doing:
+
+    $book = Jifty->app_class(Model => "Book")->new;
+
+It also works for collections:
+
+    $book = M("BookCollection");
+
+=head2 The M() function
+
+The C<M> function is a short-hand to create both record and collection
+objects. The first argument is reqruied and has to be one of the model
+name existed in your application. For example, this creates an
+I<blank> record object of Book model:
+
+    $book = M("Book");
+
+It's said to be I<blank> because it is not associated with a record
+stored in the database, and does not have any meaningful properties.
+However, it is useful to create records with this representation:
+
+    M("Book")->create({
+        name => "RT Essentials",
+        author => "Jesse Vincent"
+    });
+
+Thanks to the design of C<Jifty::DBI::Record>, which allows record
+creations with both object method and class method.
+
+The C<M> function optionally takes a list of key-value pairs after
+model names. The keys will be treated as column names, as values are,
+of course, column values. These key-value pairs will be the
+requirement used to load records. For example, this statement loads a
+record of Book with certain isbn:
+
+    $book = M("Book", isbn => "978-0099410676");
+
+Effectively, this is the same as:
+
+    $book => Jifty->app_class(Model => "Book")->new;
+    $book->load_by_cols(isbn => "978-0099410676");
+
+If the given model name is a collection, instead of meaning a I<blank>
+collection object, it means the collection of I<all> records.
+
+    $books = M("BookCollection");
+
+Effectly the same as:
+
+    $books = Jifty->app_class(Model => "BookCollection")->new;
+    $books->unlimit;
+
+Practially this is the mostly used scenario, that's why I this
+decision to lett it represent a collection of "all" instead of "none".
+
+=head2 The auto-generated model functions.
+
+Optionally, C<JiftyX::ModelHelpers> generates two functions for each
+models your Jifty application. One for accessing records, the other
+for accessing collections. For example, if you have a model named
+"Book", the generated functions are:
 
     JiftyX::ModelHelpers::Book
     JiftyX::ModelHelpers::BookCollection
 
-They are automatically imported to your currenct package scope as:
+They are imported to your currenct package scope as:
 
     Book
     BookCollection
 
+But only when use use C<JiftyX::ModelHelpers> with an C<:auto> tag:
+
+    use JiftyX::ModelHelpers ':auto':
+
 The record function takes either exact one argument or a hash. When it
- is given only one argument, that argument is treated as the value of
- "id" field and the record with that id is retured. Such as:
+is given only one argument, that argument is treated as the value of
+"id" field and the record with that id is retured. Such as:
 
     my $book = Book(42);
 
@@ -147,18 +250,18 @@ please read its POD for how to use it.
 For people who works daily in Jifty world, this should make your code
 more readible for most of the time.
 
-=head1 Namespace clobbering
+=head2 Namespace clobbering
 
 One major issue for using this module is that it automaically defines
 many functions in its caller, and that might cause naming collision.
 
-To work around this, keep in mind that this method is an L<Exporter>,
-so you can pass those functions your want explicitly:
+To work around this, keep in mind that this module is an L<Exporter>,
+and you can pass those functions your want explicitly:
 
     # Don't want BookCollection function
     use JiftyX::ModelHelpers qw(Book);
 
-=head1 Development
+=head2 Development
 
 The code repository for this project is hosted on
 
@@ -173,33 +276,15 @@ mailing list.
 
 To join the list, send mail to C<jifty-devel-subscribe@lists.jifty.org>
 
-=head1 AUTHORS
+=head1 AUTHOR
 
-Kang-min Liu C< <gugod@gugod.org> >
+  Kang-min Liu <gugod@gugod.org>
 
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-The MIT License
+This software is Copyright (c) 2008 by Kang-min Liu.
 
-Copyright (c) 2008 Kang-min Liu
+This is free software, licensed under:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-=cut
+  The MIT (X11) License
 
