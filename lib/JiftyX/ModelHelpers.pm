@@ -1,5 +1,5 @@
 package JiftyX::ModelHelpers;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 # ABSTRACT: Make it simpler to fetch records in Jifty.
 
@@ -11,7 +11,16 @@ our @EXPORT = qw(M);
 
 sub M {
     my ($model, @params) = @_;;
-    my $record = Jifty->app_class(Model => $model)->new;
+
+    return Jifty->app_class(Model => $model)->new() unless @params;
+
+    my $params_to_new = pop @params;
+    unless (ref($params_to_new) eq 'HASH') {
+        push @params, $params_to_new;
+        $params_to_new = {};
+    }
+
+    my $record = Jifty->app_class(Model => $model)->new(%$params_to_new);
     if (@params) {
         if (index($model, "Collection") > 0) {
             my %params = (@params);
@@ -20,6 +29,9 @@ sub M {
             }
         }
         else {
+            if (@params == 1) {
+                unshift @params, "id";
+            }
             $record->load_by_cols(@params);
         }
     }
@@ -45,25 +57,9 @@ sub build_model_helpers {
 
     no strict 'refs';
     for my $model (@models) {
-        if ( index($model, "Collection") >= 0) {
-            *{"$model"} = sub {
-                my @args = @_;
-                return M($model, @args);
-            }
-        }
-        else {
-            *{"$model"} = sub {
-                my @args = @_;
-                my $obj = M($model);
-                if (@args == 1) {
-                    $obj->load($args[0]);
-                }
-                elsif (@args && @args % 2 == 0) {
-                    $obj->load_by_cols(@args);
-                }
-                return $obj;
-            };
-        }
+        *{"$model"} = sub {
+            return M($model, @_);
+        };
         push @EXPORT, "&${model}";
     }
 
@@ -81,7 +77,7 @@ JiftyX::ModelHelpers - Make it simpler to fetch records in Jifty.
 
 =head1 VERSION
 
-version 0.21
+version 0.22
 
 =head1 SYNOPSIS
 
@@ -90,6 +86,9 @@ Suppose you have a "Book" model in your app:
     use JiftyX::ModelHelper;
 
     # Load the record of book with id = $id
+    $book = M(Book => $id);
+
+    # Another way.
     $book = M(Book => id => $id);
 
     # Load by other criteria
@@ -160,6 +159,15 @@ Effectively, this is the same as:
     $book => Jifty->app_class(Model => "Book")->new;
     $book->load_by_cols(isbn => "978-0099410676");
 
+If you pass only one numeric value instead of a key-value pair, that
+is specially treated as if it's an record id. So instead of saying:
+
+    $book = M("Book", id => 42);
+
+It can be shorten to:
+
+    $book = M(Book => 42);
+
 If the given model name is a collection, instead of meaning a I<blank>
 collection object, it means the collection of I<all> records.
 
@@ -172,6 +180,15 @@ Effectly the same as:
 
 Practially this is the mostly used scenario, that's why I this
 decision to lett it represent a collection of "all" instead of "none".
+
+If you need to set "current_user" to different ones when you construct
+a new model object, you can do it like this:
+
+    my $u = Jifty->app_class('CurrentUser')->superuser;
+    $book = M("Book", isbn => "978-0099410676", { current_user => $u });
+
+If the last argument to the M() method is a hashref, it is then passed
+to the C<new> method of the model class.
 
 =head2 The auto-generated model functions.
 
