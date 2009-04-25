@@ -1,6 +1,7 @@
 Changes
 LICENSE
 MANIFEST
+MANIFEST.SKIP
 META.yml
 Makefile.PL
 README
@@ -12,3 +13,4 @@ t/Simapp/lib/Simapp/Model/Book.pm
 t/Simapp/t/00-model-Book.t
 t/Simapp/t/helpers.t
 t/Simapp/t/m-helper.t
+

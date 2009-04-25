@@ -2,8 +2,6 @@ use strict;
 use warnings;
 
 package Simapp::Model::Book;
-our $VERSION = '0.22';
-
 use Jifty::DBI::Schema;
 
 use Simapp::Record schema {

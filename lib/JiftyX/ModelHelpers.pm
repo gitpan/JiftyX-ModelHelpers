@@ -1,5 +1,5 @@
 package JiftyX::ModelHelpers;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 # ABSTRACT: Make it simpler to fetch records in Jifty.
 
@@ -10,9 +10,12 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(M);
 
 sub M {
-    my ($model, @params) = @_;;
-
-    return Jifty->app_class(Model => $model)->new() unless @params;
+    my ($model, @params) = @_;
+    unless (@params) {
+        my $record = Jifty->app_class(Model => $model)->new();
+        $record->unlimit if index($model, "Collection") > 0;
+        return $record;
+    }
 
     my $params_to_new = pop @params;
     unless (ref($params_to_new) eq 'HASH') {
@@ -34,6 +37,9 @@ sub M {
             }
             $record->load_by_cols(@params);
         }
+    }
+    else {
+        $record->unlimit if index($model, "Collection") > 0;
     }
     return $record;
 }
@@ -77,7 +83,7 @@ JiftyX::ModelHelpers - Make it simpler to fetch records in Jifty.
 
 =head1 VERSION
 
-version 0.22
+version 0.23
 
 =head1 SYNOPSIS
 
@@ -304,7 +310,7 @@ To join the list, send mail to C<jifty-devel-subscribe@lists.jifty.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2008 by Kang-min Liu.
+This software is Copyright (c) 2008, 2009 by Kang-min Liu.
 
 This is free software, licensed under:
 

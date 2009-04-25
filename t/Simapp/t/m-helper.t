@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use Jifty::Test::Dist tests => 10;
+use Jifty::Test::Dist tests => 11;
 use JiftyX::ModelHelpers qw(M);
 use Simapp::Model::Book;
 
@@ -28,6 +28,7 @@ my $good_book_id;
 {
     my $b = M("BookCollection");
     is( ref($b), "Simapp::Model::BookCollection" );
+    is($b->count, 1, "There is one book in the collections so far.");
 }
 
 {
